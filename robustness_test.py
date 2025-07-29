@@ -44,7 +44,7 @@ def main_loop(motors,motor_index: int = 0, dir: int = 1, speed: float = 1):
             current_step = motors.num_of_steps[motor_index]
             elapsed = current_step - start_step
             motors.update([0, 1, 2])
-            if abs(elapsed) > duration: Action = False
+            if abs(elapsed) >= duration: Action = False
     except KeyboardInterrupt:
         print("\nMain loop interrupted by Ctrl+C.")
     finally:
