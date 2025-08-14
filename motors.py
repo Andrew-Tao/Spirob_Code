@@ -22,13 +22,14 @@ class Motors:
         if debug:
             Device.pin_factory = MockFactory()
         assert len(pul_pins) == len(dir_pins) == len(motor_orientation)
+        self.pul_pins = pul_pins
         self._PUL_devices = [OutputDevice(pin) for pin in pul_pins]
         self._DIR_devices = [OutputDevice(pin) for pin in dir_pins]
         self.motor_orientation = motor_orientation
         self.steps_per_rev = steps_per_rev
         self.max_rpm = max_rpm
         self.pulse_width = pulse_width
-
+        
         # 0 to 1 of max_rpm
         self._motor_speeds: list[float] = [0] * len(pul_pins)
         self._motor_running: list[bool] = [False] * len(pul_pins)
@@ -143,9 +144,7 @@ class Motors:
                         self.pulse_width * 1e9
                     return 1
             return 0
-        
         return self._run(self._PUL_devices, motor_index, check_counter)
-        
 
     
 
