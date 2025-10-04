@@ -49,7 +49,7 @@ def tracker(color_mask,loop):
 	image_processor.color_mask_upper = None
 
 
-path0 = Path("/home/spirob/Documents/Experiments/path_record_color_dot.txt")
+path0 = Path("/home/spirob/Documents/Experiments/path_record.txt")
 path_origin = Path("home/spirob/Desktop/frame_0000.jpg")
 acuation2pos_data = []
 with open(path0,"r") as f:

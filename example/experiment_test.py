@@ -1,6 +1,7 @@
 from arm_system import Arm_System
 from motor_advance import Spirob_Motors
 from vision_capture import Vision_System
+from load_cell import Load_Cell
 import time
 import numpy as np
 import cv2
@@ -22,7 +23,9 @@ motors = Spirob_Motors(
 
 vision = Vision_System()
 
-system = Arm_System("Hysteresis_Experiment_test",motors,vision)
+load = Load_Cell()
+
+system = Arm_System("Hysteresis_Experiment_test",motors,vision,load)
 
 # Define Experiment Specific Tasks 
 
@@ -38,11 +41,15 @@ if __name__ == "__main__":
 		system.start()
 		print("Experiment Starts")
 		
-		motors.speed = 0.8
-		#time.sleep(5)
-		lift_low(1,4000)
-		lift_low(1,4000)
-		lift_low(1,4000)
+		motors.speed = 0.5
+		#time.sleep(40)
+		#time.sleep(80)
+		#lift_low(1,5000)
+		#time.sleep(1)
+		#lift_low(1,5000)
+		#time.sleep(1)
+		lift_low(1,3000)
+		lift_low(1,3000)
 		#lift_low(1,6000)
 		#lift_low(1,6000)
 		#lift_low(1,6000)

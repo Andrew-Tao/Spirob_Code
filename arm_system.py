@@ -1,5 +1,6 @@
 from motor_advance import Spirob_Motors
 from vision_capture import Vision_System
+from load_cell import Load_Cell
 import numpy as np
 import time
 from datetime import datetime
@@ -10,20 +11,24 @@ import os
 import json
 from periodic_threading import PeriodicThread
 import matplotlib.pyplot as plt
+
 class Arm_System:
 	def __init__(
 		self,
 		experiment_name,
 		motors: Spirob_Motors,
-		vision: Vision_System
+		vision: Vision_System,
+		load: Load_Cell
 	):
 		self.experiment_name = experiment_name
 		self.motors = motors
 		self.vision = vision
+		self.load = load
 		self.start_time = None
 		now = datetime.now()
 		self.output_dir = Path(f"/home/spirob/Documents/Experiments/{experiment_name}{now}")
 		self.camera_dir = Path(os.path.join(self.output_dir,"Vision"))
+		self.load_dir = Path(os.path.join(self.output_dir,"Load"))
 		self.current_acuation = self.motors.num_of_steps
 		self.sampling_actuation = []
 		self.actuation2pos_data = []
@@ -35,11 +40,14 @@ class Arm_System:
 		self.output_dir.mkdir(parents=True,exist_ok=True)
 		self.camera_dir.mkdir(parents=True,exist_ok=True)
 		self.real_time_feedback(20, Animation = False)
+		self.load.start()
 		self.vision.path = self.camera_dir
+		self.load.path = self.load_dir
 		time.sleep(4) # Wait for the muti threading to start
 
 	def stop(self):
 		self.listener.stop()
+		self.load.end()
 		# Write History Collection Data into file 
 		file_path = os.path.join(self.output_dir,"result.txt")
 		file_path2 = os.path.join(self.output_dir,"sampling.txt")
@@ -54,7 +62,7 @@ class Arm_System:
 	
 		print("Experiment Ends")
 		
-		lower_blue = np.array([105,100,100],dtype = np.uint8)
+		lower_blue = np.array([105,150,100],dtype = np.uint8)
 		upper_blue = np.array([110,255,255],dtype = np.uint8)
 		# Imaging Processing Getting Arm Position
 		self.vision.optical_flow_track(lower_blue,upper_blue)
@@ -70,7 +78,7 @@ class Arm_System:
 		
 		
 		# Write file_path s
-		path_record = {"Exp_path":self.output_dir,"Vision_path":self.vision.path,"start_time":self.vision.start_time,"timestamps":self.vision.frame_timestamps,"acuation":self.sampling_actuation,"counter":self.vision.frame_counter}
+		path_record = {"Exp_path":self.output_dir,"Vision_path":self.vision.path,"start_time":self.vision.start_time,"timestamps":self.vision.frame_timestamps,"acuation":self.sampling_actuation,"counter":self.vision.frame_counter, "load":self.load.path}
 		with open(file_path3,"w") as f:
 			json.dump(path_record,f,default = str)
 	
@@ -80,7 +88,7 @@ class Arm_System:
 			#print(actuation_feedback["Distance"])
 			self.sampling_actuation.append(actuation_feedback["Distance"])
 			self.vision.capture_frame() # Capture a Frame
-		
+
 		self.listener = PeriodicThread(1/freq, get_current_feedback)
 		self.listener.start()
 		

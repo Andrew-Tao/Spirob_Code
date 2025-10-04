@@ -12,7 +12,7 @@ import os
 import json
 from periodic_threading import PeriodicThread
 import matplotlib.pyplot as plt
-
+from scipy.ndimage import uniform_filter1d
 color_masks = {
 	"Blue": [np.array([105,100,100],dtype = np.uint8),np.array([110,255,255],dtype = np.uint8)],
 	"Yellow":[np.array([23,100,100],dtype = np.uint8),np.array([35,255,255],dtype = np.uint8)],
@@ -26,7 +26,13 @@ loop_yellow = []
 loop_orange = []
 loop_purple = []
 loop_green = []
-
+def Equal_Length(sub,main):
+	main_num = len(main)
+	sub_num = len(sub)
+	result = np.array([])
+	for i in range(len(main)):
+		result = np.append(result,sub[int(i*sub_num/main_num)])
+	return result
 def tracker(color_mask,loop):
 
 	lower_blue = color_mask[0]
@@ -49,7 +55,7 @@ def tracker(color_mask,loop):
 	image_processor.color_mask_upper = None
 
 
-path0 = Path("/home/spirob/Documents/Experiments/path_record_horizontal.txt")
+path0 = Path("/home/spirob/Documents/Experiments/path_record_load.txt")
 path_origin = Path("home/spirob/Desktop/frame_0000.jpg")
 acuation2pos_data = []
 with open(path0,"r") as f:
@@ -66,6 +72,12 @@ output_dir = Path(path_record["Exp_path"])
 image_processor.frame_timestamps = path_record["timestamps"]
 sampling_actuation = path_record["acuation"]
 
+load_path = path_record["load"]
+
+
+with open(load_path,"r") as f:
+	sampling_load = json.load(f)
+
 
 # Processing Different Color Dots 
 tracker(color_masks["Blue"],loop_blue)
@@ -81,6 +93,14 @@ loop_blue = np.array(loop_blue)
 #loop_purple = np.array(loop_purple)
 #loop_green = np.array(loop_green)
 
+trim_num = len(sampling_load) - len(loop_blue[:,2])
+sampling_load = sampling_load[trim_num:]
+print(len(loop_blue))
+print(len(sampling_load))
+sampling_load = Equal_Length(sampling_load,loop_blue[:,2])
+print(len(loop_blue))
+print(len(sampling_load))
+smooth_load = uniform_filter1d(sampling_load,size = 100)
 
 """
 plt.figure(1)
@@ -103,7 +123,7 @@ plt.legend()
 
 fig, ax = plt.subplots()
 #sc = ax.scatter(data[:,1],data[:,2],c = data[:,0],cmap = 'viridis', label = "Motor0", s=18,marker = '+')
-sc = ax.scatter(loop_blue[:,4],loop_blue[:,2],c = loop_blue[:,0], label = "Two Strings",s = 18,marker = 'o')
+sc = ax.scatter(smooth_load,loop_blue[:,2],c = loop_blue[:,0], label = "Load_Actuation",s = 18,marker = 'o')
  
 #sc = ax.scatter(loop_yellow[:,1],loop_yellow[:,2],c = 'blue',label = "Unit 5",s = 18,marker = 'x')
 #sc = ax.scatter(loop_orange[:,1],loop_orange[:,2],c = 'black', label = "Unit 10",s = 18,marker = 's')
@@ -111,7 +131,7 @@ sc = ax.scatter(loop_blue[:,4],loop_blue[:,2],c = loop_blue[:,0], label = "Two S
 #sc = ax.scatter(loop_green[:,1],loop_green[:,2],c = 'orange', label = "Unit 18",s = 18,marker = 'o')
 cb = plt.colorbar(sc,ax = ax)
 cb.set_label("Time (s)",rotation = 270, labelpad = 15)
-ax.set_xlabel("Acuation (mm)")
+ax.set_xlabel("Acuation (load_cell raw value)")
 ax.set_ylabel("Position Y (pixels)")
 ax.set_title("Position Y via Actuation colored by time")
 ax.legend()
@@ -119,7 +139,7 @@ ax.legend()
 
 fig, ax1 = plt.subplots()
 #sc = ax.scatter(data[:,1],data[:,2],c = data[:,0],cmap = 'viridis', label = "Motor0", s=18,marker = '+')
-sc1 = ax1.scatter(loop_blue[:,4],loop_blue[:,1],c = loop_blue[:,0], label = "Two Strings",s = 18,marker = 'o')
+sc1 = ax1.scatter(loop_blue[:,4],loop_blue[:,2],c = loop_blue[:,0], label = "Distance_Actuation",s = 18,marker = 'o')
  
 #sc = ax.scatter(loop_yellow[:,1],loop_yellow[:,2],c = 'blue',label = "Unit 5",s = 18,marker = 'x')
 #sc = ax.scatter(loop_orange[:,1],loop_orange[:,2],c = 'black', label = "Unit 10",s = 18,marker = 's')
@@ -128,8 +148,8 @@ sc1 = ax1.scatter(loop_blue[:,4],loop_blue[:,1],c = loop_blue[:,0], label = "Two
 cb = plt.colorbar(sc,ax = ax1)
 cb.set_label("Time (s)",rotation = 270, labelpad = 15)
 ax1.set_xlabel("Acuation (mm)")
-ax1.set_ylabel("Position X (pixels)")
-ax1.set_title("Position X via Actuation colored by time")
+ax1.set_ylabel("Position Y (pixels)")
+ax1.set_title("Position Y via Actuation colored by time")
 ax1.legend()
 
 
@@ -150,7 +170,17 @@ ax2.legend()
 
 """
 plt.figure(3)
-plt.plot(data[:,0],label = "time")
+plt.plot(loop_blue[:,1],smooth_load)
+plt.plot(-1000000*sampling_load)
+plt.grid(True)
+plt.tight_layout()
+plt.legend()
+
+
+plt.figure(4)
+plt.plot(loop_blue[:,0],sampling_load/100000)
+plt.xlabel("Time(s)")
+plt.ylabel("Stress (Pa)")
 plt.grid(True)
 plt.tight_layout()
 plt.legend()
@@ -177,7 +207,3 @@ plt.tight_layout()
 plt.legend()
 """
 plt.show()
-
-
-
-
